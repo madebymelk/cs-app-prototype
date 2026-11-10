@@ -4,6 +4,7 @@ import { ApiError } from '@/api/client';
 import { getScreenPop } from '@/api/interactionAdapter';
 import { CopyButton } from '@/components/CopyButton/CopyButton';
 import { InlineAlert } from '@/components/InlineAlert/InlineAlert';
+import { isCallReason } from '@/config/caseTypes';
 import { strings } from '@/content/strings';
 import { MessageSquare, Phone } from '@/design/icons';
 import styles from './InteractionPage.module.css';
@@ -46,7 +47,13 @@ export function InteractionPage() {
             </div>
             <div>
               <dt>{s.initialReason}</dt>
-              <dd>{interaction.initialReason ?? <span className={styles.muted}>{s.initialReasonMissing}</span>}</dd>
+              <dd>
+                {interaction.initialReason ? (
+                  isCallReason(interaction.initialReason) ? strings.callReasons[interaction.initialReason] : interaction.initialReason
+                ) : (
+                  <span className={styles.muted}>{s.initialReasonMissing}</span>
+                )}
+              </dd>
             </div>
           </dl>
         ) : null}

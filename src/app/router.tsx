@@ -3,7 +3,8 @@ import { AppShell } from './AppShell/AppShell';
 import { InteractionPage } from './routes/InteractionPage';
 import { LandingPage } from './routes/LandingPage';
 import { NotFoundPage } from './routes/NotFoundPage';
-import { RequireRole } from './routes/RequireRole';
+import { RequirePermission } from './routes/RequirePermission';
+import { CASE_SEARCH_ACCESS } from '@/config/navigation';
 import {
   AdminPage,
   CaseDetailPage,
@@ -20,17 +21,31 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <LandingPage /> },
       { path: 'interaction/:id', element: <InteractionPage /> },
-      { path: 'cases', element: <CaseSearchPage /> },
-      { path: 'cases/:id', element: <CaseDetailPage /> },
+      {
+        path: 'cases',
+        element: (
+          <RequirePermission anyOf={CASE_SEARCH_ACCESS} thing="case search">
+            <CaseSearchPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'cases/:id',
+        element: (
+          <RequirePermission anyOf={CASE_SEARCH_ACCESS} thing="this case">
+            <CaseDetailPage />
+          </RequirePermission>
+        ),
+      },
       { path: 'profiles/veteran/:id', element: <VeteranProfilePage /> },
       { path: 'profiles/provider/:id', element: <ProviderProfilePage /> },
       { path: 'documents/:id', element: <DocumentPage /> },
       {
         path: 'admin',
         element: (
-          <RequireRole roles={['admin']} thing="administration">
+          <RequirePermission anyOf={['canAdminister']} thing="administration">
             <AdminPage />
-          </RequireRole>
+          </RequirePermission>
         ),
       },
       { path: '*', element: <NotFoundPage /> },

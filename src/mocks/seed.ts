@@ -1,4 +1,5 @@
 import type { Channel, Interaction, Veteran } from '@/domain/types';
+import { strings } from '@/content/strings';
 import { FIRST_NAMES, IVR_REASONS, LAST_NAMES } from './names';
 
 /**
@@ -73,7 +74,7 @@ export function generateInteraction(rng: Rng, opts: { channel: Channel; now: Dat
     },
     authState: 'verified',
     initialReason: reason,
-    ivrHistory: ['Main menu', 'Veteran', reason],
+    ivrHistory: ['Main menu', 'Veteran', strings.callReasons[reason]],
     caseIds: [],
     linkageStatus: 'ok',
   };

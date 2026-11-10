@@ -94,11 +94,19 @@ export interface Case {
   status: CaseStatus;
   caseType?: string;
   callerType: CallerType;
+  /** Caller's first name (F5 requires it; not in the docs/05 sketch of Case). */
+  callerFirstName?: string;
+  /** Stable reference to the caller (Veteran/provider ID) used for duplicate detection. */
+  callerRef?: string;
   finalReason?: string;
   disposition?: string;
   notes: string;
   repeatContact?: boolean;
   workgroup?: { id: string; assignedBy: 'rule' | 'manual' };
+  /** Case-type-specific fields from src/config/caseTypes.ts (F5). */
+  typeFields: Record<string, string>;
+  /** Last downstream failure; the case stays Open with this error (docs/01). */
+  downstreamError?: { message: string; correlationId?: string };
   linked: LinkedRecord[];
   escalations: Escalation[];
   workflows: WorkflowRef[];
@@ -154,3 +162,15 @@ export type HealthStatus =
   | { status: 'healthy' }
   | { status: 'degraded'; sources: string[] }
   | { status: 'outage'; sources: string[] };
+
+export type EligibilityType = 'communityCare' | 'urgentCare' | 'pharmacy' | 'dental';
+export type EligibilityStatus = 'eligible' | 'notEligible' | 'pending' | 'unknown' | 'unavailable';
+/** One entry per eligibility type. Types are separate: one never implies another (F7). */
+export interface Eligibility {
+  type: EligibilityType;
+  status: EligibilityStatus;
+  source: string;
+  updatedAt?: string;
+}
+
+export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };

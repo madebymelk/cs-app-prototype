@@ -77,6 +77,15 @@ export const strings = {
     },
     notFound: { title: 'Page not found', body: "This page doesn't exist or has moved.", home: 'Go to home' },
   },
+  callReasons: {
+    referralVerification: 'Referral verification',
+    eligibilityConfirmation: 'Eligibility confirmation',
+    urgentCareReferral: 'Urgent care referral',
+    claimFiling: 'Claim filing',
+    pharmacyClaim: 'Pharmacy claim',
+    escalationFollowUp: 'Escalation follow-up',
+    providerEnrollment: 'Provider enrollment',
+  },
   copy: { button: (what: string) => `Copy ${what}`, copied: 'Copied' },
   devToolbar: {
     label: 'Prototype controls',

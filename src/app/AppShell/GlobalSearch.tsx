@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { strings } from '@/content/strings';
-import { canSearchCases } from '@/config/navigation';
+import { CASE_SEARCH_ACCESS } from '@/config/navigation';
+import { canAny } from '@/domain/permissions';
 import { Search } from '@/design/icons';
 import type { RoleId } from '@/domain/types';
 import styles from './GlobalSearch.module.css';
@@ -23,7 +24,7 @@ export function GlobalSearch({ roleId }: { roleId: RoleId }) {
     return () => { window.removeEventListener('keydown', onKey); };
   }, []);
 
-  if (!canSearchCases(roleId)) return null;
+  if (!canAny(roleId, CASE_SEARCH_ACCESS)) return null;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();

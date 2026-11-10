@@ -38,6 +38,16 @@ describe('AppShell', () => {
     expect(screen.getByText(/you don't have access to administration/i)).toBeInTheDocument();
   });
 
+  it('guards case routes by permission: admin is denied, QA is allowed', async () => {
+    useSession.setState({ roleId: 'admin' });
+    const { unmount } = renderApp('/cases');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Access denied' })).toBeInTheDocument();
+    unmount();
+    useSession.setState({ roleId: 'qa' });
+    renderApp('/cases');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Cases' })).toBeInTheDocument();
+  });
+
   it('shows the training banner for trainers', () => {
     useSession.setState({ roleId: 'trainer' });
     renderApp('/');
