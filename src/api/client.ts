@@ -18,7 +18,7 @@ export async function apiGet<T>(path: string, source: string, init?: RequestInit
   try {
     const headers = new Headers(init?.headers);
     headers.set('Accept', 'application/json');
-    res = await fetch(new URL(`${API_BASE}${path}`, window.location.origin), { ...init, headers });
+    res = await fetch(new URL(`.${API_BASE}${path}`, document.baseURI), { ...init, headers });
   } catch (e) {
     throw new ApiError(e instanceof Error ? e.message : 'Network error', 0, undefined, source);
   }

@@ -1,4 +1,4 @@
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from './AppShell/AppShell';
 import { InteractionPage } from './routes/InteractionPage';
 import { LandingPage } from './routes/LandingPage';
@@ -38,4 +38,6 @@ export const routes: RouteObject[] = [
   },
 ];
 
-export const createAppRouter = () => createBrowserRouter(routes);
+/** The static demo (published as an Artifact) can't own the URL path, so it routes in memory. */
+export const isDemoBuild = import.meta.env.VITE_DEMO === 'true';
+export const createAppRouter = () => (isDemoBuild ? createMemoryRouter(routes) : createBrowserRouter(routes));

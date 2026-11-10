@@ -20,7 +20,7 @@ const json = (body: object, status = 200) =>
   HttpResponse.json(body, { status, headers: { 'x-correlation-id': correlationId() } });
 
 export const handlers = [
-  http.get(`${API_BASE}/interactions/:id`, async ({ params }) => {
+  http.get(`*${API_BASE}/interactions/:id`, async ({ params }) => {
     await simulateLatency();
     const { scenario } = useDevStore.getState();
     if (scenario === 'screenPopFailed') return json({ error: 'Screen pop unavailable' }, 503);
@@ -29,7 +29,7 @@ export const handlers = [
     return json(interaction);
   }),
 
-  http.get(`${API_BASE}/health`, async () => {
+  http.get(`*${API_BASE}/health`, async () => {
     await delay(50);
     const { scenario } = useDevStore.getState();
     let body: HealthStatus = { status: 'healthy' };

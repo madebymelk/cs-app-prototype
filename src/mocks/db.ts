@@ -89,6 +89,10 @@ export const mockDb = {
     }
   },
   reset() {
-    sessionStorage.removeItem(KEY);
+    try {
+      sessionStorage.removeItem(KEY);
+    } catch {
+      /* storage unavailable */
+    }
   },
 };

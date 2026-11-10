@@ -13,7 +13,8 @@
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm run test",
     "e2e": "playwright test",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:demo": "tsc --noEmit && vite build --mode demo --base ./ --outDir dist-demo"
   },
   "msw": {
     "workerDirectory": [

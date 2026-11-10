@@ -11,6 +11,12 @@ import { App } from './app/App';
 async function enableMocks() {
   // The prototype always runs on mocks unless explicitly disabled (real adapters replace src/api later).
   if (import.meta.env.VITE_USE_MOCKS === 'false') return;
+  if (import.meta.env.VITE_DEMO === 'true') {
+    // Static demo: service workers are unavailable, so route /api calls to the same handlers in-page.
+    const { installFetchShim } = await import('./api/msw/fetchShim');
+    installFetchShim();
+    return;
+  }
   const { worker } = await import('./api/msw/browser');
   await worker.start({ onUnhandledRequest: 'bypass', quiet: true });
 }

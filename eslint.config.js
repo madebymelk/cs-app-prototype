@@ -5,7 +5,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'public', 'playwright-report', 'test-results', 'screenshots'] },
+  { ignores: ['dist', 'dist-demo', 'node_modules', 'public', 'playwright-report', 'test-results', 'screenshots'] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {

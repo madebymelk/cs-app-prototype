@@ -186,8 +186,13 @@ export function DevToolbar() {
             className={styles.linkButton}
             onPress={() => {
               mockDb.reset();
-              sessionStorage.clear();
-              window.location.assign('/');
+              try {
+                sessionStorage.clear();
+              } catch {
+                /* storage unavailable */
+              }
+              if (import.meta.env.VITE_DEMO === 'true') window.location.reload();
+              else window.location.assign('/');
             }}
           >
             <RotateCcw size={16} aria-hidden />
