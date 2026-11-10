@@ -91,6 +91,7 @@ export function isEmptyDraft(c: Case, initialReason?: string): boolean {
   const reasonChanged = c.finalReason !== undefined && c.finalReason !== initialReason;
   return (
     c.notes.trim() === '' &&
+    !c.nextSteps?.trim() &&
     !reasonChanged &&
     !c.disposition &&
     c.repeatContact === undefined &&

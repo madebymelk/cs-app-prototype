@@ -101,6 +101,8 @@ export interface Case {
   finalReason?: string;
   disposition?: string;
   notes: string;
+  /** Next steps agreed with the caller (closeout, docs/03). Optional. */
+  nextSteps?: string;
   repeatContact?: boolean;
   workgroup?: { id: string; assignedBy: 'rule' | 'manual' };
   /** Case-type-specific fields from src/config/caseTypes.ts (F5). */

@@ -27,6 +27,8 @@ export const SCENARIOS = [
   { id: 'createRecordFails', label: 'Record creation fails', group: 'Records', description: 'UCERN/VPERN create request errors.' },
   { id: 'escalationSubmitFails', label: 'Escalation submit fails', group: 'Escalation', description: 'ServiceNow submit returns an error.' },
   { id: 'syncDelayed', label: 'Sync delayed', group: 'Escalation', description: 'Downstream status sync is behind.' },
+  // Added for F5 AC "autosave failure keeps input and retries" (not in the docs/05 scenario list).
+  { id: 'autosaveFails', label: 'Autosave fails', group: 'System', description: 'Saving a case fails until you switch scenario.' },
   { id: 'slowSources', label: 'Slow sources', group: 'System', description: 'Each source answers in 3 to 12 seconds.' },
   { id: 'sessionTimeout', label: 'Session timeout', group: 'System', description: 'Session expiry warning appears soon.' },
   { id: 'deniedRecording', label: 'Recording denied', group: 'System', description: 'Recording access is denied for this user.' },

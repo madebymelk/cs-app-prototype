@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+/* The hidden attribute always wins over component display rules. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }

@@ -60,10 +60,9 @@ export function DevToolbar() {
     void navigate(`/interaction/${interaction.id}`);
   };
 
+  // Ends through the workspace so the same rules apply (open cases block ending).
   const endInteraction = () => {
-    const id = interactionMatch?.params.id;
-    if (id) mockDb.endInteraction(id);
-    void navigate('/');
+    window.dispatchEvent(new Event('cs:end-interaction'));
   };
 
   return (

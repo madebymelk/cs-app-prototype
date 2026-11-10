@@ -16,6 +16,23 @@ afterEach(() => {
   server.resetHandlers();
   sessionStorage.clear();
   useDevStore.setState({ latencyMs: 0 });
+
+// jsdom has no matchMedia; tests render the wide (≥1280px) workspace unless they override it.
+if (typeof (window as { matchMedia?: unknown }).matchMedia !== 'function') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
+  });
+}
 });
 
 afterAll(() => {

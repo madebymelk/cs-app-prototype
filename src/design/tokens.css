@@ -83,6 +83,7 @@
   --radius-panel: 0.5rem;
   --radius-pill: 999px;
   --shadow-overlay: 0 0.25rem 1rem rgb(0 0 0 / 0.2); /* overlays only: dropdowns, dialogs, drawers */
+  --color-scrim: rgb(27 27 27 / 0.5); /* behind modal dialogs and drawers */
 
   /* Focus */
   --focus-width: 2px;

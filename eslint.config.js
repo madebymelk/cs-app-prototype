@@ -18,6 +18,10 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.flatConfigs.strict.rules,
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { ignoreRestSiblings: true, varsIgnorePattern: '^_', argsIgnorePattern: '^_' },
+      ],
       // Copy lives in src/content/strings.ts (docs/04). Flag raw JSX text in feature code.
       'no-restricted-syntax': [
         'error',

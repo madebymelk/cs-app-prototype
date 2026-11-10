@@ -1,6 +1,6 @@
 import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from './AppShell/AppShell';
-import { InteractionPage } from './routes/InteractionPage';
+import { WorkspacePage } from '@/features/workspace/WorkspacePage';
 import { LandingPage } from './routes/LandingPage';
 import { NotFoundPage } from './routes/NotFoundPage';
 import { RequirePermission } from './routes/RequirePermission';
@@ -20,7 +20,7 @@ export const routes: RouteObject[] = [
     element: <AppShell />,
     children: [
       { index: true, element: <LandingPage /> },
-      { path: 'interaction/:id', element: <InteractionPage /> },
+      { path: 'interaction/:id', element: <WorkspacePage /> },
       {
         path: 'cases',
         element: (

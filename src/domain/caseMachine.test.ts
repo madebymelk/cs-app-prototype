@@ -143,6 +143,7 @@ describe('isEmptyDraft', () => {
 
   it.each<[string, Partial<Case>]>([
     ['notes', { notes: 'x' }],
+    ['next steps', { nextSteps: 'Call back Friday' }],
     ['changed reason', { finalReason: 'claimFiling' }],
     ['disposition', { disposition: 'resolved' }],
     ['repeat contact', { repeatContact: true }],
