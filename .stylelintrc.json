@@ -1,0 +1,15 @@
+{
+  "plugins": ["stylelint-declaration-strict-value"],
+  "rules": {
+    "color-no-hex": true,
+    "color-named": "never",
+    "unit-disallowed-list": [["px"], { "ignoreProperties": { "px": ["/^border/", "outline", "outline-offset", "/^--/"] } }],
+    "scale-unlimited/declaration-strict-value": [
+      ["/color$/", "fill", "stroke", "font-size", "font-family", "/^margin/", "/^padding/", "gap", "row-gap", "column-gap", "border-radius", "box-shadow", "z-index"],
+      { "ignoreValues": ["transparent", "currentColor", "inherit", "initial", "unset", "0", "auto", "none", "100%", "1", "-1"], "disableFix": true }
+    ]
+  },
+  "overrides": [
+    { "files": ["src/design/tokens.css"], "rules": { "color-no-hex": null, "unit-disallowed-list": null, "scale-unlimited/declaration-strict-value": null } }
+  ]
+}

@@ -1,0 +1,17 @@
+.button {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: var(--space-1);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.button[data-hovered] {
+  background: var(--color-primary-lighter);
+  color: var(--color-primary-dark);
+}

@@ -1,0 +1,35 @@
+.health {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--control-h-compact);
+  padding: var(--space-0) var(--space-2);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.healthy .icon {
+  color: var(--color-success-bg);
+}
+
+.degraded,
+.outage {
+  background: var(--color-warning-bg);
+  color: var(--color-ink);
+}
+
+.degraded .icon {
+  color: var(--color-warning);
+}
+
+.outage {
+  background: var(--color-error-bg);
+}
+
+.outage .icon {
+  color: var(--color-error);
+}
+
+.unknown .icon {
+  color: var(--color-text-inverse);
+}

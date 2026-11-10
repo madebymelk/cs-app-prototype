@@ -1,0 +1,116 @@
+/*
+ * Design tokens: the single source of raw values (docs/02-design-system.md).
+ * Foundation: USWDS / VA Clinical Design System. Components reference var(--…) only;
+ * stylelint rejects raw hex, named colors and px spacing/type everywhere else.
+ */
+:root {
+  /* Color: brand and action */
+  --color-primary: #005ea2;
+  --color-primary-dark: #1a4480;
+  --color-primary-darker: #162e51;
+  --color-primary-lighter: #d9e8f6;
+
+  /* Color: text */
+  --color-ink: #1b1b1b;
+  --color-text-secondary: #565c65;
+  --color-text-disabled: #71767a;
+  --color-text-inverse: #ffffff;
+
+  /* Color: borders and surfaces */
+  --color-border-strong: #a9aeb1; /* dividers that matter; NOT input boundaries (2.3:1 on white) */
+  /* Deviation from docs/02: input/control boundaries need 3:1 (WCAG 1.4.11); #a9aeb1 is 2.3:1. */
+  --color-border-control: #71767a;
+  --color-border: #dfe1e2;
+  --color-surface-canvas: #f0f0f0;
+  --color-surface: #ffffff;
+  --color-surface-readonly: #f7f8f9;
+  --color-focus: #2491ff;
+
+  /*
+   * Color: status (always icon + text + color).
+   * Contrast rule (verified in tokens.test.ts): status-colored TEXT only on --color-surface (white).
+   * On -bg tints and gray surfaces, text is --color-ink; the status color is used for icon + border (3:1).
+   */
+  --color-success: #008817;
+  --color-success-bg: #ecf3ec;
+  --color-warning: #936f38;
+  --color-warning-border: #ffbe2e;
+  --color-warning-bg: #faf3d1;
+  --color-error: #b50909;
+  --color-error-bg: #f4e3db;
+  --color-info: #2e6276;
+  --color-info-border: #00bde3;
+  --color-info-bg: #e7f6f8;
+  --color-emergency: #9c3d10;
+
+  /* Typography */
+  --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --text-xs-size: 0.75rem;   --text-xs-line: 1rem;        /* 12/16 captions, source tags */
+  --text-sm-size: 0.875rem;  --text-sm-line: 1.25rem;     /* 14/20 dense tables, labels */
+  --text-md-size: 1rem;      --text-md-line: 1.5rem;      /* 16/24 body, inputs */
+  --text-lg-size: 1.125rem;  --text-lg-line: 1.625rem;    /* 18/26 panel titles, 600 */
+  --text-xl-size: 1.375rem;  --text-xl-line: 1.75rem;     /* 22/28 page titles, 700 */
+  --text-2xl-size: 1.75rem;  --text-2xl-line: 2.125rem;   /* 28/34 landing greeting, 700 */
+  --measure-prose: 80ch;
+
+  /* Space (4px base) */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Sizes */
+  --control-h: 2.5rem;
+  --control-h-compact: 2rem;
+  --row-h: 2.5rem;
+  --row-h-compact: 2rem;
+  --target-min: 1.5rem; /* WCAG 2.5.8 */
+  --icon-sm: 1rem;
+  --icon-md: 1.25rem;
+  --border-width: 1px;
+  --border-width-strong: 2px;
+
+  /* Shape and elevation */
+  --radius-control: 0.25rem;
+  --radius-panel: 0.5rem;
+  --radius-pill: 999px;
+  --shadow-overlay: 0 0.25rem 1rem rgb(0 0 0 / 0.2); /* overlays only: dropdowns, dialogs, drawers */
+
+  /* Focus */
+  --focus-width: 2px;
+  --focus-offset: 2px;
+
+  /* Motion (panels/drawers only) */
+  --motion-fast: 120ms;
+  --motion-panel: 180ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout: live interaction workspace */
+  --shell-h: 3rem;          /* A: 48 */
+  --interaction-h: 4rem;    /* B: 64 */
+  --nav-w: 15rem;           /* C: 240 */
+  --context-w: 25rem;       /* E: 400 */
+  --context-w-min: 20rem;   /* 320 */
+  --context-w-max: 35rem;   /* 560 */
+  --devbar-w: 20rem;
+
+  /* Stacking */
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-devbar: 1000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-panel: 0ms;
+  }
+}

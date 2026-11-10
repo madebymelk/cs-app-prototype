@@ -1,0 +1,24 @@
+.skip {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+  z-index: var(--z-overlay);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.link {
+  position: absolute;
+  transform: translateY(-200%);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-overlay);
+  white-space: nowrap;
+}
+
+.link:focus {
+  position: static;
+  transform: none;
+}

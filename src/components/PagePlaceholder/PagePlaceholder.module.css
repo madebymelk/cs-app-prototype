@@ -1,0 +1,16 @@
+.page {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--measure-prose);
+  padding: var(--space-6);
+}
+
+.title {
+  font-size: var(--text-xl-size);
+  line-height: var(--text-xl-line);
+  font-weight: var(--weight-bold);
+}
+
+.note {
+  color: var(--color-text-secondary);
+}

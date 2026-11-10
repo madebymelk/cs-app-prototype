@@ -1,0 +1,25 @@
+.page {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--measure-prose);
+  padding: var(--space-6);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xl-size);
+  line-height: var(--text-xl-line);
+  font-weight: var(--weight-bold);
+}
+
+.greeting {
+  font-size: var(--text-2xl-size);
+  line-height: var(--text-2xl-line);
+  font-weight: var(--weight-bold);
+}
+
+.muted {
+  color: var(--color-text-secondary);
+}

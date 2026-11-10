@@ -1,0 +1,57 @@
+.shell {
+  display: grid;
+  grid-template-rows: var(--shell-h) auto minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.bar {
+  grid-row: 1;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-0) var(--space-4);
+  background: var(--color-primary-darker);
+  color: var(--color-text-inverse);
+  font-size: var(--text-sm-size);
+  line-height: var(--text-sm-line);
+}
+
+.brand {
+  color: var(--color-text-inverse);
+  font-size: var(--text-lg-size);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand:hover {
+  color: var(--color-text-inverse);
+  text-decoration: underline;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.training {
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  background: var(--color-warning-bg);
+  border-bottom: var(--border-width) solid var(--color-warning-border);
+  color: var(--color-ink);
+  font-size: var(--text-sm-size);
+}
+
+.main {
+  grid-row: 3;
+  min-height: 0;
+  overflow: auto;
+}
+
+.main:focus {
+  outline: none;
+}
