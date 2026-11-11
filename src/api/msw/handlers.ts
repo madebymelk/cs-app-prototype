@@ -24,6 +24,20 @@ const json = (body: object, status = 200) =>
   HttpResponse.json(body, { status, headers: { 'x-correlation-id': correlationId() } });
 
 const scenario = () => useDevStore.getState().scenario;
+/** syncDelayed: downstream status sync is 47 minutes behind. */
+const syncedAt = () => new Date(Date.now() - (scenario() === 'syncDelayed' ? 47 * 60_000 : 0)).toISOString();
+
+const ESCALATION_FLOW: Record<string, string> = { new: 'assigned', assigned: 'pending', pending: 'resolved', blocked: 'assigned' };
+const ESCALATION_OWNERS: Record<string, string> = {
+  new: 'VA CCN escalations queue',
+  assigned: 'Claims research team',
+  pending: 'Claims research team',
+  resolved: 'Claims research team',
+  slaRisk: 'Claims research team',
+  blocked: 'Claims research team',
+  rerouted: 'Provider services team',
+};
+const WORKFLOW_FLOW: Record<string, string> = { submitting: 'inProgress', inProgress: 'pendingAction', pendingAction: 'resolved', blocked: 'inProgress', slaRisk: 'pendingAction' };
 const p = (path: string) => `*${API_BASE}${path}`;
 
 export const handlers = [
@@ -78,6 +92,41 @@ export const handlers = [
     const issues = validateClose(body);
     if (issues.length) return json({ issues }, 422);
     return json(mockDb.saveCase({ ...body, id: existing.id, status: 'closed' }));
+  }),
+
+  // ---- Escalations (F14, F15) and workflows (F12) ----
+  http.post(p('/escalations'), async ({ request }) => {
+    await simulateLatency();
+    if (scenario() === 'escalationSubmitFails') return json({ error: 'Destination unavailable' }, 502);
+    const body = (await request.json()) as { destination: string; templateId: string };
+    const n = String(Math.floor(1_000_000 + Math.random() * 8_999_999));
+    const externalId = body.destination === 'servicenow' ? `INC${n}` : `MN-2026-${n.slice(0, 6)}`;
+    return json({ externalId, status: 'new', owner: ESCALATION_OWNERS.new, lastSyncedAt: syncedAt() }, 201);
+  }),
+
+  // Stateless mock: the next status is derived from the current one, so "Refresh status" walks the lifecycle.
+  http.get(p('/escalations/:id'), async ({ request }) => {
+    await simulateLatency();
+    const current = new URL(request.url).searchParams.get('status') ?? 'new';
+    if (scenario() === 'syncDelayed') return json({ status: current, owner: ESCALATION_OWNERS[current] ?? ESCALATION_OWNERS.new, lastSyncedAt: syncedAt() });
+    const next = ESCALATION_FLOW[current] ?? current;
+    return json({ status: next, owner: ESCALATION_OWNERS[next], lastSyncedAt: syncedAt() });
+  }),
+
+  http.post(p('/workflows'), async () => {
+    await simulateLatency();
+    return json({ id: `WF-${String(Math.floor(100_000 + Math.random() * 899_999))}`, status: 'submitting' }, 201);
+  }),
+
+  http.get(p('/workflows/:id'), async ({ request }) => {
+    await simulateLatency();
+    const current = new URL(request.url).searchParams.get('status') ?? 'submitting';
+    if (scenario() === 'escalationSubmitFails' && current === 'inProgress') {
+      return json({ status: 'blocked', owner: 'Care coordination team', blockedReason: 'Referral number is missing from the intake. Add it to the case, then retry.' });
+    }
+    if (scenario() === 'syncDelayed' && current === 'inProgress') return json({ status: 'slaRisk', owner: 'Care coordination team' });
+    const next = WORKFLOW_FLOW[current] ?? current;
+    return json({ status: next, owner: next === 'submitting' ? undefined : 'Care coordination team' });
   }),
 
   // ---- Veteran profile (F7): every source answers independently ----

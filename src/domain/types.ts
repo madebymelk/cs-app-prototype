@@ -68,11 +68,21 @@ export interface Escalation {
   templateId: string;
   fields: Record<string, string>;
   lastSyncedAt?: string;
+  createdAt?: string;
+  /** Downstream owner (team or queue) once assigned. */
+  owner?: string;
+  attachments?: string[];
+  error?: { message: string; correlationId?: string };
 }
 
 export interface WorkflowRef {
   id: string;
-  status: string;
+  name: string;
+  status: 'submitting' | 'inProgress' | 'pendingAction' | 'slaRisk' | 'blocked' | 'resolved';
+  owner?: string;
+  blockedReason?: string;
+  startedAt: string;
+  updatedAt: string;
 }
 export interface CorrespondenceRef {
   id: string;

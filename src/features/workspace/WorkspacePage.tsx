@@ -31,6 +31,7 @@ import type { Case } from '@/domain/types';
 import { veteranAdapter } from '@/api/veteranAdapter';
 import { ContextChips } from '@/components/ContextChips/ContextChips';
 import { ContextPanel } from '@/features/context/ContextPanel';
+import { DownstreamSection } from '@/features/downstream/DownstreamSection';
 import { addCase, associateProvider, cancelCase, closeCase, copyPrior, endInteraction, identifyVeteran } from './actions';
 import { scheduleSave } from './autosave';
 import { issueMessage, issueTarget } from './issues';
@@ -93,6 +94,7 @@ export function WorkspacePage() {
   const [adding, setAdding] = useState(false);
   const [endBlocked, setEndBlocked] = useState<string[] | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [escalating, setEscalating] = useState(false);
   const [viewDuplicate, setViewDuplicate] = useState<Case | null>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   const caseHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -218,6 +220,7 @@ export function WorkspacePage() {
   useShortcuts({
     'Alt+Shift+N': () => { if (canWork) void onAdd(); },
     'Alt+Shift+C': toggleContext,
+    'Alt+Shift+E': () => { if (active && canWork && !['closed', 'discarded', 'canceled'].includes(active.status)) setEscalating(true); },
     'Ctrl+Enter': () => { if (active && canWork && active.status !== 'closed') void onClose(); },
     ...Object.fromEntries(
       cases.slice(0, 9).map((c, i) => [`Alt+Shift+${String(i + 1)}`, () => { select(c.id); }]),
@@ -383,6 +386,12 @@ export function WorkspacePage() {
               showAllErrors={Boolean(attempted[active.id])}
               readOnly={readOnly}
               onChange={onChange}
+            />
+            <DownstreamSection
+              c={active}
+              readOnly={readOnly}
+              escalating={escalating}
+              onEscalatingChange={setEscalating}
             />
             <Closeout
               c={active}

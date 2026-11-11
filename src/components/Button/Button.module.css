@@ -41,6 +41,8 @@
 }
 
 .quiet {
+  padding-left: var(--space-0);
+  padding-right: var(--space-0);
   border-color: transparent;
   background: transparent;
   color: var(--color-primary);

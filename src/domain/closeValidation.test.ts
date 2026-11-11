@@ -57,7 +57,7 @@ describe('validateClose', () => {
     });
 
     it('blocks with the template fields still missing on a draft escalation', () => {
-      const c = { ...claim, escalations: [makeEscalation({ fields: { claimNumber: '20261103-0042' } })] };
+      const c = { ...claim, escalations: [makeEscalation({ fields: { caseId: claim.id, claimNumber: '20261103-0042' } })] };
       expect(validateClose(c)).toEqual([
         { field: 'escalation.dateOfService', code: 'escalationIncomplete' },
         { field: 'escalation.issueSummary', code: 'escalationIncomplete' },
@@ -66,7 +66,7 @@ describe('validateClose', () => {
     });
 
     it('blocks a complete but unsubmitted escalation', () => {
-      const fields = { claimNumber: '1', dateOfService: '2026-10-02', issueSummary: 'Denied in error' };
+      const fields = { caseId: claim.id, claimNumber: '1', dateOfService: '2026-10-02', issueSummary: 'Denied in error' };
       const c = { ...claim, escalations: [makeEscalation({ status: 'submitting', fields })] };
       expect(validateClose(c)).toEqual([{ field: 'escalation', code: 'escalationNotSubmitted' }]);
     });
