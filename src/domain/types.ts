@@ -119,6 +119,13 @@ export interface Case {
   audit: AuditEvent[];
 }
 
+export interface Address {
+  line1: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
 export interface Veteran {
   id: string;
   firstName: string;
@@ -130,6 +137,11 @@ export interface Veteran {
   ssnLast4: string;
   icn: string;
   preferredFacilityId?: string;
+  preferredFacilityName?: string;
+  phone?: string;
+  address?: Address;
+  /** System of record for contact info (shown as the address source link). */
+  addressSource?: string;
 }
 
 export interface Provider {
@@ -138,8 +150,15 @@ export interface Provider {
   npi: string;
   tin: string;
   specialty: string;
+  taxonomy: string;
+  placeOfService: string;
   facilityId: string;
   status: 'active' | 'inactive';
+  networkSource: string;
+  enrollment: 'enrolled' | 'pending' | 'notEnrolled';
+  attestation: 'current' | 'expired';
+  address?: Address;
+  updatedAt: string;
 }
 
 export interface Facility {
@@ -176,3 +195,18 @@ export interface Eligibility {
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
+
+/** Authoritative records (read-only, linked by reference). Non-clinical fields only. */
+export interface Referral { id: string; number: string; specialty: string; status: 'active' | 'scheduled' | 'pending' | 'expired'; issuedOn: string; expiresOn: string; providerName: string }
+export interface Claim { id: string; number: string; kind: 'medical' | 'dental' | 'pharmacy'; status: 'received' | 'inReview' | 'paid' | 'denied'; serviceDate: string; providerName: string }
+export interface Rfs { id: string; number: string; specialty: string; status: 'submitted' | 'approved' | 'returned'; submittedOn: string }
+export interface PriorAuth { id: string; number: string; service: string; status: 'pending' | 'approved' | 'denied'; requestedOn: string }
+export interface UmReview { id: string; number: string; reviewType: string; status: 'inReview' | 'complete'; openedOn: string }
+export interface EdEvent { id: string; facilityName: string; arrivedOn: string; notifiedWithin72h: boolean }
+export interface EligibilityRecord { id: string; kind: 'ucern' | 'vpern'; number: string; facilityName: string; status: 'active' | 'expired'; createdOn: string }
+
+export interface RecordList<T> {
+  items: T[];
+  source: string;
+  updatedAt: string;
+}

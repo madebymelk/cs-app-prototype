@@ -1,7 +1,7 @@
-import type { Case, Channel, Interaction } from '@/domain/types';
+import type { Case, Channel, Interaction, Veteran } from '@/domain/types';
 import type { ScenarioId } from '@/dev/scenarios';
 import { auditEvent } from '@/domain/audit';
-import { caseId, generateInteraction, hashString, mulberry32, pick } from './seed';
+import { caseId, generateInteraction, generateVeteran, hashString, isoDaysAgo, mulberry32, pick } from './seed';
 import { FIRST_NAMES, LAST_NAMES } from './names';
 
 /**
@@ -14,17 +14,24 @@ const PRIOR_AGENT = 'AGT-11873';
 interface Db {
   interactions: Record<string, Interaction>;
   cases: Record<string, Case>;
+  veterans: Record<string, Veteran>;
   counter: number;
 }
+
+/** A fixed, searchable population of synthetic Veterans (same every session). */
+const POPULATION: Veteran[] = (() => {
+  const rng = mulberry32(2026);
+  return Array.from({ length: 24 }, () => generateVeteran(rng));
+})();
 
 function load(): Db {
   try {
     const raw = sessionStorage.getItem(KEY);
-    if (raw) return { cases: {}, ...(JSON.parse(raw) as Partial<Db>) } as Db;
+    if (raw) return { cases: {}, veterans: {}, ...(JSON.parse(raw) as Partial<Db>) } as Db;
   } catch {
     /* storage unavailable: start empty */
   }
-  return { interactions: {}, cases: {}, counter: 0 };
+  return { interactions: {}, cases: {}, veterans: {}, counter: 0 };
 }
 
 function save(db: Db) {
@@ -59,6 +66,10 @@ export function applyScenario(base: Interaction, scenario: ScenarioId, rng: () =
       break;
     case 'linkageFailed':
       i.linkageStatus = 'failed';
+      break;
+    case 'veteranMultipleMatch':
+      // Can't verify someone who isn't identified yet.
+      i.authState = 'notVerified';
       break;
     default:
       break;
@@ -141,7 +152,18 @@ export const mockDb = {
     db.counter += 1;
     const now = opts.now ?? new Date();
     const rng = mulberry32(hashString(`${opts.scenario}:${String(db.counter)}:${String(Date.now())}`));
-    const interaction = applyScenario(generateInteraction(rng, { channel: opts.channel, now }), opts.scenario, rng);
+    const veteran = generateVeteran(rng);
+    if (opts.scenario === 'veteranDeceased') veteran.dateOfDeath = isoDaysAgo(now, 40).slice(0, 10);
+    db.veterans[veteran.id] = veteran;
+    const interaction = applyScenario(generateInteraction(rng, { channel: opts.channel, now, veteran }), opts.scenario, rng);
+    if (opts.scenario === 'veteranMultipleMatch') {
+      // The phone number matched several Veterans with the same name: the screen pop can't pick one.
+      interaction.caller.identifiers = {};
+      for (let n = 0; n < 2; n++) {
+        const lookalike = { ...generateVeteran(rng), firstName: veteran.firstName, lastName: veteran.lastName };
+        db.veterans[lookalike.id] = lookalike;
+      }
+    }
     db.interactions[interaction.id] = interaction;
     seedScenarioCases(db, interaction, opts.scenario, rng, now);
     save(db);
@@ -183,6 +205,22 @@ export const mockDb = {
     i.caseIds = [...i.caseIds, id];
     save(db);
     return c;
+  },
+  getVeteran(id: string): Veteran | undefined {
+    return load().veterans[id] ?? POPULATION.find((v) => v.id === id);
+  },
+  /** Approved identifiers: last name (+ optional DOB), last 4 of SSN, ICN or member ID. */
+  searchVeterans(q: { lastName?: string; dob?: string; ssnLast4?: string; icn?: string; memberId?: string }): Veteran[] {
+    const all = [...Object.values(load().veterans), ...POPULATION];
+    const norm = (s: string | undefined) => s?.trim().toLowerCase() ?? '';
+    return all.filter(
+      (v) =>
+        (!norm(q.lastName) || v.lastName.toLowerCase() === norm(q.lastName)) &&
+        (!norm(q.dob) || v.dob === q.dob?.trim()) &&
+        (!norm(q.ssnLast4) || v.ssnLast4 === q.ssnLast4?.trim()) &&
+        (!norm(q.icn) || v.icn.toLowerCase() === norm(q.icn)) &&
+        (!norm(q.memberId) || v.memberId.toLowerCase() === norm(q.memberId)),
+    );
   },
   getCase(id: string): Case | undefined {
     return load().cases[id];

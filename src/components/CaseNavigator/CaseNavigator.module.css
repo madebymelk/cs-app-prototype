@@ -87,3 +87,29 @@
   padding-top: var(--space-3);
   border-top: var(--border-width) solid var(--color-border);
 }
+
+.priorList {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-0);
+  padding: var(--space-0);
+  list-style: none;
+}
+
+.priorItem {
+  display: grid;
+  justify-items: start;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-readonly);
+  color: var(--color-ink);
+  font-size: var(--text-sm-size);
+  text-align: left;
+  cursor: pointer;
+}
+
+.priorItem:hover {
+  border-color: var(--color-primary);
+}

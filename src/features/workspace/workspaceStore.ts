@@ -36,6 +36,10 @@ export interface WorkspaceState {
   dismissedDuplicates: Record<string, true>;
   ended: Record<string, true>;
   contextOpen: boolean;
+  /** Veteran the agent identified when the screen pop couldn't (multiple match, partial pop). */
+  veteranFor: Record<string, string>;
+  /** Where the context panel is, per interaction, so Back and reloads restore it (docs/02 Drill-down). */
+  contextNav: Record<string, ContextNav>;
 
   loadCases: (interactionId: string, cases: Case[]) => void;
   addCase: (c: Case) => void;
@@ -50,7 +54,17 @@ export interface WorkspaceState {
   dismissDuplicate: (caseId: string) => void;
   markEnded: (interactionId: string) => void;
   setContextOpen: (open: boolean) => void;
+  setVeteran: (interactionId: string, veteranId: string) => void;
+  setContextNav: (interactionId: string, nav: Partial<ContextNav>) => void;
 }
+
+export interface ContextNav {
+  top: 'veteran' | 'provider';
+  tab: string;
+  detail?: { kind: string; id: string } | undefined;
+}
+
+export const DEFAULT_CONTEXT_NAV: ContextNav = { top: 'veteran', tab: 'referrals' };
 
 export const useWorkspace = create<WorkspaceState>()(
   persist(
@@ -64,6 +78,8 @@ export const useWorkspace = create<WorkspaceState>()(
       dismissedDuplicates: {},
       ended: {},
       contextOpen: true,
+      veteranFor: {},
+      contextNav: {},
 
       loadCases: (interactionId, cases) => {
         set((s) => ({
@@ -113,7 +129,7 @@ export const useWorkspace = create<WorkspaceState>()(
           const r = transition(next, { type: 'start' }, { actorId, permissions: PERMISSIONS.csr });
           if (r.ok) next = r.value;
         }
-        const fields = Object.keys(patch);
+        const fields = Object.keys(patch).filter((f) => f !== 'audit');
         set((s) => ({
           cases: { ...s.cases, [caseId]: next },
           dirty: { ...s.dirty, [caseId]: [...new Set([...(s.dirty[caseId] ?? []), ...fields])] },
@@ -158,6 +174,16 @@ export const useWorkspace = create<WorkspaceState>()(
 
       setContextOpen: (contextOpen) => {
         set({ contextOpen });
+      },
+
+      setVeteran: (interactionId, veteranId) => {
+        set((s) => ({ veteranFor: { ...s.veteranFor, [interactionId]: veteranId } }));
+      },
+
+      setContextNav: (interactionId, nav) => {
+        set((s) => ({
+          contextNav: { ...s.contextNav, [interactionId]: { ...DEFAULT_CONTEXT_NAV, ...s.contextNav[interactionId], ...nav } },
+        }));
       },
     }),
     {

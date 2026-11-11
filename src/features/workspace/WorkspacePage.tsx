@@ -28,12 +28,15 @@ import { auditEvent, auditLog } from '@/domain/audit';
 import { validateClose, type CloseIssue } from '@/domain/closeValidation';
 import { findDuplicates } from '@/domain/duplicates';
 import type { Case } from '@/domain/types';
-import { addCase, cancelCase, closeCase, endInteraction } from './actions';
+import { veteranAdapter } from '@/api/veteranAdapter';
+import { ContextChips } from '@/components/ContextChips/ContextChips';
+import { ContextPanel } from '@/features/context/ContextPanel';
+import { addCase, associateProvider, cancelCase, closeCase, copyPrior, endInteraction, identifyVeteran } from './actions';
 import { scheduleSave } from './autosave';
 import { issueMessage, issueTarget } from './issues';
 import { useInteractionCases } from './useInteractionCases';
 import { useMediaQuery, WIDE_QUERY } from './useMediaQuery';
-import { casesFor, useWorkspace } from './workspaceStore';
+import { casesFor, DEFAULT_CONTEXT_NAV, useWorkspace, type ContextNav } from './workspaceStore';
 import styles from './WorkspacePage.module.css';
 
 const w = strings.workspace;
@@ -76,6 +79,10 @@ export function WorkspacePage() {
   const saveState = useWorkspace((st) => (active ? st.save[active.id] : undefined)) ?? { state: 'idle' as const };
   const auth = useWorkspace((st) => st.auth[id]);
   const contextOpenPref = useWorkspace((st) => st.contextOpen);
+  const identified = useWorkspace((st) => st.veteranFor[id]);
+  const veteranId = interaction?.caller.identifiers.veteranId ?? identified;
+  const nav = useWorkspace((st) => st.contextNav[id]) ?? DEFAULT_CONTEXT_NAV;
+  const onNav = (n: Partial<ContextNav>) => { useWorkspace.getState().setContextNav(id, n); };
   const [drawerOpen, setDrawerOpen] = useState(false);
   const contextOpen = wide ? contextOpenPref : drawerOpen;
 
@@ -128,6 +135,20 @@ export function WorkspacePage() {
     active && !dismissed && ['draft', 'open'].includes(active.status) && prior.data
       ? findDuplicates(active, prior.data, new Date())[0]
       : undefined;
+
+  const priorQuery = useQuery({
+    queryKey: ['records', veteranId, 'cases'],
+    queryFn: ({ signal }) => veteranAdapter.priorCases(veteranId ?? '', signal),
+    enabled: Boolean(veteranId) && canWork,
+    retry: false,
+  });
+  const priorCases = veteranId ? (priorQuery.data?.items.filter((c) => c.interactionId !== id) ?? []) : undefined;
+
+  const openPrior = (caseId: string) => {
+    onNav({ top: 'veteran', tab: 'cases', detail: { kind: 'cases', id: caseId } });
+    if (wide) useWorkspace.getState().setContextOpen(true);
+    else setDrawerOpen(true);
+  };
 
   const select = (caseId: string) => {
     focusCaseOnChange.current = true;
@@ -266,6 +287,8 @@ export function WorkspacePage() {
             error={casesState.error ? w.loadError : undefined}
             onSelect={select}
             onAdd={() => void onAdd()}
+            priorCases={priorCases}
+            onOpenPrior={openPrior}
           />
         </div>
       ) : null}
@@ -342,6 +365,7 @@ export function WorkspacePage() {
               ) : null}
             </div>
             {readOnly && active.status !== 'closed' ? <p className={styles.muted}>{w.form.readOnly}</p> : null}
+            <ContextChips linked={active.linked} />
 
             {attempted[active.id] && shownIssues.length > 0 && active.status !== 'closed' ? (
               <ErrorSummary
@@ -391,7 +415,25 @@ export function WorkspacePage() {
             </Button>
           ) : null}
         </div>
-        <p className={styles.muted}>{w.context.stub}</p>
+        <ContextPanel
+          interaction={interaction}
+          veteranId={veteranId}
+          activeCase={canWork ? active : undefined}
+          nav={nav}
+          onNav={onNav}
+          onIdentify={(v) => {
+            if (!interaction) return;
+            identifyVeteran(interaction, v);
+            announce(strings.context.identify.linked(`${v.firstName} ${v.lastName}`));
+          }}
+          onAssociateProvider={(pr) => {
+            if (!active) return;
+            if (associateProvider(active.id, pr, interaction?.initialReason)) {
+              announce(strings.context.provider.associatedAnnounce(pr.name, active.id));
+            }
+          }}
+          onCopy={(prior, selection) => (active ? copyPrior(active.id, prior, selection, interaction?.initialReason) : 0)}
+        />
       </aside>
 
       <Dialog isOpen={endBlocked !== null} onOpenChange={(o) => { if (!o) setEndBlocked(null); }} title={w.end.blockedTitle}>

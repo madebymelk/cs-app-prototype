@@ -2,13 +2,14 @@ import { ApiError } from '@/api/client';
 import { caseAdapter, closeIssuesFrom } from '@/api/caseAdapter';
 import { useSession } from '@/app/sessionStore';
 import { decisions } from '@/config/decisions';
-import { auditLog } from '@/domain/audit';
+import { auditEvent, auditLog } from '@/domain/audit';
+import { copyFromPriorCase, type CopySelection } from '@/domain/priorCopy';
 import { canEndInteraction, transition, type TransitionError } from '@/domain/caseMachine';
 import { validateClose, type CloseIssue } from '@/domain/closeValidation';
 import { permissionsFor } from '@/domain/permissions';
 import { assignWorkgroup, caseTypeFor, initialFinalReason } from '@/domain/routing';
-import type { Case, Interaction } from '@/domain/types';
-import { cancelSave, flush } from './autosave';
+import type { AuditEvent, Case, Interaction, LinkedRecord, Provider, Veteran } from '@/domain/types';
+import { cancelSave, flush, scheduleSave } from './autosave';
 import { casesFor, useWorkspace } from './workspaceStore';
 
 const ctx = () => {
@@ -18,11 +19,58 @@ const ctx = () => {
 
 /** Fields for a new case: the first case takes the IVR reason (autoDraft); later cases start blank. */
 function newCaseFields(i: Interaction, isFirst: boolean): Partial<Case> {
+  const identified = useWorkspace.getState().veteranFor[i.id];
+  const veteranFields: Partial<Case> = identified
+    ? { callerRef: identified, linked: [{ kind: 'veteran', refId: identified, label: 'Veteran', associatedBy: 'manual' }] }
+    : {};
   const finalReason = isFirst && decisions.initialCaseMode === 'autoDraft' ? initialFinalReason(i) : undefined;
-  if (!finalReason) return {};
+  if (!finalReason) return veteranFields;
   const workgroup = assignWorkgroup({ finalReason });
   const caseType = caseTypeFor(finalReason);
-  return { finalReason, ...(workgroup ? { workgroup } : {}), ...(caseType ? { caseType } : {}) };
+  return { ...veteranFields, finalReason, ...(workgroup ? { workgroup } : {}), ...(caseType ? { caseType } : {}) };
+}
+
+const WORKABLE = (c: Case) => !['closed', 'discarded', 'canceled'].includes(c.status);
+
+/** Apply a patch plus an audit event to a case, save it, and publish the event. */
+function editWithAudit(c: Case, patch: Partial<Case>, event: AuditEvent, initialReason?: string) {
+  useWorkspace.getState().editCase(c.id, { ...patch, audit: [...c.audit, event] }, event.actorId, initialReason);
+  scheduleSave(c.id, event.actorId);
+  auditLog.emit(event);
+}
+
+/** The agent identified the Veteran: link them to every open case in this interaction (F7). */
+export function identifyVeteran(i: Interaction, veteran: Veteran) {
+  const { actorId } = ctx();
+  useWorkspace.getState().setVeteran(i.id, veteran.id);
+  for (const c of casesFor(useWorkspace.getState(), i.id).filter(WORKABLE)) {
+    const linked: LinkedRecord[] = [
+      ...c.linked.filter((l) => l.kind !== 'veteran'),
+      { kind: 'veteran', refId: veteran.id, label: 'Veteran', associatedBy: 'manual' },
+    ];
+    editWithAudit(c, { callerRef: veteran.id, linked }, auditEvent(actorId, 'case.associated', { changedFields: ['linked'], refIds: [c.id, veteran.id] }), i.initialReason);
+  }
+}
+
+/** Associate a provider with a case: context chip + audit event (F8 AC). Idempotent. */
+export function associateProvider(caseId: string, provider: Provider, initialReason?: string): boolean {
+  const c = useWorkspace.getState().cases[caseId];
+  if (!c || !WORKABLE(c)) return false;
+  if (c.linked.some((l) => l.kind === 'provider' && l.refId === provider.id)) return true;
+  const { actorId } = ctx();
+  const linked: LinkedRecord[] = [...c.linked, { kind: 'provider', refId: provider.id, label: provider.name, associatedBy: 'manual' }];
+  editWithAudit(c, { linked }, auditEvent(actorId, 'case.associated', { changedFields: ['linked'], refIds: [c.id, provider.id] }), initialReason);
+  return true;
+}
+
+/** Selective copy from a prior case (F6). Returns the number of fields copied. */
+export function copyPrior(caseId: string, prior: Case, selection: CopySelection, initialReason?: string): number {
+  const c = useWorkspace.getState().cases[caseId];
+  if (!c || !WORKABLE(c)) return 0;
+  const r = copyFromPriorCase(c, prior, selection, ctx().actorId);
+  if (!r) return 0;
+  editWithAudit(c, r.patch, r.audit, initialReason);
+  return Object.keys(r.patch).length;
 }
 
 export async function addCase(i: Interaction, isFirst = false): Promise<Case> {

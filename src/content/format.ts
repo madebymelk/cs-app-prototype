@@ -25,3 +25,7 @@ export function formatElapsed(ms: number): string {
   const sec = String(s % 60).padStart(2, '0');
   return h ? `${String(h)}:${String(m).padStart(2, '0')}:${sec}` : `${String(m)}:${sec}`;
 }
+
+/** Calendar dates ("2026-10-02") as "Oct 2, 2026", without timezone drift. */
+const dateOnly = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
+export const formatDate = (ymd: string) => dateOnly.format(new Date(`${ymd.slice(0, 10)}T00:00:00Z`));

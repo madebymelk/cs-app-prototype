@@ -1,3 +1,4 @@
+import { formatRelative } from '@/content/format';
 import { strings } from '@/content/strings';
 import { Plus } from '@/design/icons';
 import { reasonLabel } from '../InteractionHeader/InteractionHeader';
@@ -19,6 +20,9 @@ export interface CaseNavigatorProps {
   error?: string | undefined;
   onSelect: (caseId: string) => void;
   onAdd: () => void;
+  /** This caller's earlier cases (read-only). Undefined until the Veteran is identified. */
+  priorCases?: Case[] | undefined;
+  onOpenPrior?: (caseId: string) => void;
 }
 
 /** Region C: one interaction's cases, one focused at a time (no tabs, docs/02 multi-case pattern). */
@@ -32,6 +36,8 @@ export function CaseNavigator({
   error,
   onSelect,
   onAdd,
+  priorCases,
+  onOpenPrior,
 }: CaseNavigatorProps) {
   return (
     <nav className={styles.nav} aria-labelledby="case-nav-title">
@@ -83,7 +89,28 @@ export function CaseNavigator({
         <h2 id="prior-title" className={styles.subtitle}>
           {t.priorTitle}
         </h2>
-        <p className={styles.muted}>{t.priorStub}</p>
+        {priorCases === undefined ? (
+          <p className={styles.muted}>{t.priorUnknown}</p>
+        ) : priorCases.length === 0 ? (
+          <p className={styles.muted}>{t.priorEmpty}</p>
+        ) : (
+          <ul className={styles.priorList}>
+            {priorCases.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className={styles.priorItem}
+                  onClick={() => onOpenPrior?.(c.id)}
+                  aria-label={strings.context.prior.view(c.id)}
+                >
+                  <span className="mono">{c.id}</span>
+                  <span>{reasonLabel(c.finalReason) ?? strings.workspace.header.finalReasonNone}</span>
+                  <span className={styles.muted}>{formatRelative(c.createdAt)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </nav>
   );

@@ -1,6 +1,6 @@
 import type { Channel, Interaction, Veteran } from '@/domain/types';
 import { strings } from '@/content/strings';
-import { FIRST_NAMES, IVR_REASONS, LAST_NAMES } from './names';
+import { FACILITY_CITIES, FIRST_NAMES, IVR_REASONS, LAST_NAMES } from './names';
 
 /**
  * Seeded synthetic data generator (docs/05). Deterministic for a given seed.
@@ -46,6 +46,7 @@ export const ani = (rng: Rng) => `(555) 01${digits(rng, 1)}-${digits(rng, 4)}`; 
 
 export function generateVeteran(rng: Rng): Veteran {
   const year = int(rng, 1940, 1998);
+  const [city, state] = pick(rng, FACILITY_CITIES);
   return {
     id: `VET-${digits(rng, 7)}`,
     firstName: pick(rng, FIRST_NAMES),
@@ -55,11 +56,18 @@ export function generateVeteran(rng: Rng): Veteran {
     memberId: `M${digits(rng, 9)}`,
     ssnLast4: digits(rng, 4),
     icn: icn(rng),
+    preferredFacilityId: `FAC-${digits(rng, 3)}`,
+    preferredFacilityName: `${city} VA Medical Center`,
+    phone: ani(rng),
+    address: { line1: `${String(int(rng, 100, 9899))} ${pick(rng, STREETS)}`, city, state, zip: `9${digits(rng, 4)}` },
+    addressSource: 'VA Profile',
   };
 }
 
-export function generateInteraction(rng: Rng, opts: { channel: Channel; now: Date }): Interaction {
-  const vet = generateVeteran(rng);
+const STREETS = ['Mesquite Ln', 'Juniper Ct', 'Larkspur Ave', 'Cottonwood Dr', 'Harbor View Rd', 'Pinecrest Way'];
+
+export function generateInteraction(rng: Rng, opts: { channel: Channel; now: Date; veteran?: Veteran }): Interaction {
+  const vet = opts.veteran ?? generateVeteran(rng);
   const reason = pick(rng, IVR_REASONS);
   return {
     id: interactionId(rng),
@@ -79,3 +87,7 @@ export function generateInteraction(rng: Rng, opts: { channel: Channel; now: Dat
     linkageStatus: 'ok',
   };
 }
+
+export const isoDaysAgo = (now: Date, days: number) => new Date(now.getTime() - days * 86_400_000).toISOString();
+export const dateDaysAgo = (now: Date, days: number) => isoDaysAgo(now, days).slice(0, 10);
+export { int as randInt, digits as randDigits };

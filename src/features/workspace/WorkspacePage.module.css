@@ -63,11 +63,10 @@
   border-left: var(--border-width) solid var(--color-border);
 }
 
+/* Narrow / 200% zoom: context overlays the case area only, so the interaction header is never covered. */
 .drawer {
-  position: fixed;
-  top: calc(var(--shell-h) + var(--space-2));
-  right: var(--space-0);
-  bottom: var(--space-0);
+  grid-area: case;
+  justify-self: end;
   z-index: var(--z-overlay);
   width: min(var(--context-w), 100%);
   box-shadow: var(--shadow-overlay);

@@ -13,7 +13,8 @@ data, accessibility and the build plan are in [`docs/`](docs).
 | M0 | Scaffold, design tokens, app shell, mock API, Dev Toolbar, test harness | Done |
 | M1 | Domain rules: case lifecycle, close validation, routing, permissions, audit (100% unit-tested) | Done |
 | M2 | Live workspace: interaction header, caller verification, cases, case form, autosave, closeout | Done |
-| M3–M10 | See [`docs/07-build-plan.md`](docs/07-build-plan.md) | Not started |
+| M3 | Context panel: Veteran and provider profiles, eligibility, records tabs, prior cases with selective copy, per-source loading and failure | Done |
+| M4–M10 | See [`docs/07-build-plan.md`](docs/07-build-plan.md) | Not started |
 
 ## Run it
 
@@ -50,5 +51,8 @@ role and scenario and simulates voice or chat calls.
 - **Case model:** `callerFirstName`, `callerRef`, `typeFields`, `nextSteps` and `downstreamError`
   were added to `Case` (needed by F5; not in the docs/05 sketch).
 - **Scenario:** `autosaveFails` was added to test autosave retry.
+- **Record data:** record fields and statuses are synthetic, non-clinical examples; the stale thresholds
+  (10 minutes for records, 30 days for the provider directory) and the network source list are
+  `// DECISION:` placeholders in `src/config/sources.ts`.
 - **Tooling:** ESLint 9 (the jsx-a11y plugin doesn't support 10) and TypeScript 5.9; `tldts` and
   `playwright-core` are pinned via `overrides` in `package.json`.

@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { completeCase, gotoApp, startCall } from './helpers';
+import { completeCase, gotoApp, startCall, typeInto } from './helpers';
 
 /** Visual check (docs/06): key screens at 1440, 1280 and 200% zoom. Saved to screenshots/<milestone>/. */
-const DIR = 'screenshots/m2';
+const DIR = 'screenshots/m3';
 const SIZES = [
   { name: '1440', width: 1440, height: 900 },
   { name: '1280', width: 1280, height: 720 },
@@ -57,5 +57,53 @@ test('workspace: context drawer @ 200% zoom', async ({ page }) => {
   await startCall(page);
   await page.keyboard.press('Alt+Shift+C');
   await expect(page.getByRole('complementary', { name: 'Context' })).toBeVisible();
+  await page.waitForTimeout(300);
   await page.screenshot({ path: `${DIR}/workspace-drawer-1280-zoom200.png` });
+});
+
+for (const size of SIZES) {
+  test(`context: Veteran profile, eligibility and records @ ${size.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await startCall(page);
+    if (size.width < 1280) await page.keyboard.press('Alt+Shift+C');
+    await expect(page.getByRole('heading', { name: /veteran profile/i })).toBeVisible();
+    await page.waitForTimeout(300); // let the drawer finish sliding in
+    await page.screenshot({ path: `${DIR}/context-profile-${size.name}.png` });
+  });
+}
+
+test('context: records tab and drill-down @ 1440', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startCall(page);
+  const tab = page.getByRole('tab', { name: 'Claims' });
+  await tab.scrollIntoViewIfNeeded();
+  await tab.click();
+  await expect(page.getByRole('table', { name: 'Claims' })).toBeVisible();
+  await page.getByRole('table', { name: 'Claims' }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${DIR}/context-claims-1440.png` });
+});
+
+test('context: multiple match @ 1440', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startCall(page, { scenario: 'Veteran multiple match' });
+  await expect(page.getByText(/possible matches/)).toBeVisible();
+  await page.screenshot({ path: `${DIR}/context-multiple-match-1440.png` });
+});
+
+test('context: provider ambiguous + inactive @ 1440', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startCall(page, { scenario: 'Provider ambiguous, inactive' });
+  await page.getByRole('tab', { name: 'Provider' }).click();
+  await typeInto(page, /name or organization/i, 'Whitlow');
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('Inactive facility')).toBeVisible();
+  await page.getByText('Inactive facility').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${DIR}/context-provider-1440.png` });
+});
+
+test('context: profile service down @ 1440', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startCall(page, { scenario: 'Profile service down' });
+  await expect(page.getByText(/Veteran profile service isn't responding/)).toBeVisible();
+  await page.screenshot({ path: `${DIR}/context-profile-down-1440.png` });
 });

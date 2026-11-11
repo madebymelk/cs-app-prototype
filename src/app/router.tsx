@@ -10,9 +10,8 @@ import {
   CaseDetailPage,
   CaseSearchPage,
   DocumentPage,
-  ProviderProfilePage,
-  VeteranProfilePage,
 } from './routes/stubPages';
+import { ProviderProfilePage, VeteranProfilePage } from '@/features/context/ProfilePages';
 
 /** Routes (docs/03). Screen pop goes straight to /interaction/:id. */
 export const routes: RouteObject[] = [
