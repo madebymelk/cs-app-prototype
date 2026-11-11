@@ -27,6 +27,9 @@ const scenario = () => useDevStore.getState().scenario;
 /** syncDelayed: downstream status sync is 47 minutes behind. */
 const syncedAt = () => new Date(Date.now() - (scenario() === 'syncDelayed' ? 47 * 60_000 : 0)).toISOString();
 
+const createdRecords = new Map<string, object>();
+const failedOnce = new Set<string>();
+
 const ESCALATION_FLOW: Record<string, string> = { new: 'assigned', assigned: 'pending', pending: 'resolved', blocked: 'assigned' };
 const ESCALATION_OWNERS: Record<string, string> = {
   new: 'VA CCN escalations queue',
@@ -129,6 +132,29 @@ export const handlers = [
     return json({ status: next, owner: next === 'submitting' ? undefined : 'Care coordination team' });
   }),
 
+  // ---- UCERN / VPERN (F13): idempotent create; createRecordFails fails the first attempt per key ----
+  http.post(p('/eligibility-records'), async ({ request }) => {
+    await simulateLatency();
+    const body = (await request.json()) as { idempotencyKey: string; kind: 'ucern' | 'vpern'; facilityName: string };
+    const existing = createdRecords.get(body.idempotencyKey);
+    if (existing) return json(existing); // a retry returns the same record: never a duplicate
+    if (scenario() === 'createRecordFails' && !failedOnce.has(body.idempotencyKey)) {
+      failedOnce.add(body.idempotencyKey);
+      return json({ error: 'Eligibility record service unavailable' }, 503);
+    }
+    const n = String(Math.floor(10_000_000 + Math.random() * 89_999_999));
+    const record = {
+      id: `${body.kind.toUpperCase()}-${n.slice(0, 6)}`,
+      kind: body.kind,
+      number: `${body.kind === 'ucern' ? 'UC' : 'VP'}-${n}`,
+      facilityName: body.facilityName,
+      status: 'active',
+      createdOn: new Date().toISOString().slice(0, 10),
+    };
+    createdRecords.set(body.idempotencyKey, record);
+    return json(record, 201);
+  }),
+
   // ---- Veteran profile (F7): every source answers independently ----
   http.get(p('/veterans'), async ({ request }) => {
     await simulateLatency();
@@ -172,12 +198,12 @@ export const handlers = [
   http.get(p('/providers'), async ({ request }) => {
     await simulateLatency();
     const q = Object.fromEntries(new URL(request.url).searchParams);
-    return json(searchProviders(q, scenario() === 'providerAmbiguousInactive'));
+    return json(searchProviders(q, scenario() === 'providerAmbiguousInactive', scenario() === 'ucernControlFail'));
   }),
 
   http.get(p('/providers/:id'), async ({ params }) => {
     await simulateLatency();
-    const { providers, facilities } = directory(scenario() === 'providerAmbiguousInactive');
+    const { providers, facilities } = directory(scenario() === 'providerAmbiguousInactive', scenario() === 'ucernControlFail');
     const provider = providers.find((x) => x.id === String(params.id));
     if (!provider) return json({ error: 'Provider not found' }, 404);
     return json({ provider, facility: facilities.find((f) => f.id === provider.facilityId) });

@@ -123,3 +123,16 @@ export async function refreshWorkflow(caseId: string, workflowId: string): Promi
     return false;
   }
 }
+
+/** Attach a created UCERN/VPERN record to the case automatically (F13) and audit it. */
+export async function attachEligibilityRecord(caseId: string, record: { kind: 'ucern' | 'vpern'; number: string }) {
+  const c = get(caseId);
+  if (!c) return;
+  if (c.linked.some((l) => l.refId === record.number)) return;
+  const linked = [...c.linked, { kind: record.kind, refId: record.number, label: record.kind.toUpperCase(), associatedBy: 'auto' as const }];
+  // A created record is real work: a Draft becomes Open.
+  const started = c.status === 'draft' ? transition(c, { type: 'start' }, ctx()) : undefined;
+  const base = started?.ok ? started.value : c;
+  put(withAudit({ ...base, linked }, 'record.created', [caseId, record.number], ['linked']));
+  await flush(caseId);
+}

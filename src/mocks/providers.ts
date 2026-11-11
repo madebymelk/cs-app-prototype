@@ -9,6 +9,9 @@ export const FACILITIES: Facility[] = [
   { id: 'FAC-103', name: 'Desert Sky Cardiology', city: 'Tucson', state: 'AZ', zip: '85712', status: 'active' },
   { id: 'FAC-104', name: 'Riverbend Physical Therapy', city: 'Dayton', state: 'OH', zip: '45402', status: 'active' },
   { id: 'FAC-105', name: 'QuickCare Urgent Care', city: 'Boise', state: 'ID', zip: '83702', status: 'active' },
+  { id: 'FAC-106', name: 'Canyon Urgent Care', city: 'Tucson', state: 'AZ', zip: '85711', status: 'active' },
+  { id: 'FAC-107', name: 'Saguaro Community Pharmacy', city: 'Tucson', state: 'AZ', zip: '85716', status: 'active' },
+  { id: 'FAC-108', name: 'Riverside Retail Pharmacy', city: 'Dayton', state: 'OH', zip: '45405', status: 'active' },
 ];
 
 const p = (o: Partial<Provider> & Pick<Provider, 'id' | 'name' | 'npi' | 'facilityId' | 'specialty'>): Provider => ({
@@ -38,10 +41,23 @@ export const PROVIDERS: Provider[] = [
   p({ id: 'PRV-2006', name: 'QuickCare Urgent Care', npi: '9100200306', facilityId: 'FAC-105', specialty: 'Urgent care',
     taxonomy: '261QU0200X', placeOfService: 'Urgent care facility', networkSource: 'CCN Region 2', tin: '995566778',
     address: { line1: '900 W Main St', city: 'Boise', state: 'ID', zip: '83702' } }),
+  p({ id: 'PRV-2007', name: 'Canyon Urgent Care', npi: '9100200307', facilityId: 'FAC-106', specialty: 'Urgent care',
+    taxonomy: '261QU0200X', placeOfService: 'Urgent care facility', networkSource: 'CCN Region 3', tin: '996677889',
+    address: { line1: '5300 E Speedway Blvd', city: 'Tucson', state: 'AZ', zip: '85711' } }),
+  p({ id: 'PRV-2008', name: 'Saguaro Community Pharmacy', npi: '9100200308', facilityId: 'FAC-107', specialty: 'Pharmacy',
+    taxonomy: '3336C0003X', placeOfService: 'Pharmacy', networkSource: 'VA network', tin: '997788990',
+    address: { line1: '2500 N Swan Rd', city: 'Tucson', state: 'AZ', zip: '85716' } }),
+  p({ id: 'PRV-2009', name: 'Riverside Retail Pharmacy', npi: '9100200309', facilityId: 'FAC-108', specialty: 'Pharmacy',
+    taxonomy: '3336C0003X', placeOfService: 'Pharmacy', networkSource: 'CCN Region 1', tin: '998899001',
+    address: { line1: '1200 Riverside Dr', city: 'Dayton', state: 'OH', zip: '45405' } }),
 ];
 
 /** providerAmbiguousInactive: the Oracle Rd site is inactive, its record lacks an address and is stale. */
-export function directory(ambiguous: boolean): { providers: Provider[]; facilities: Facility[] } {
+export function directory(ambiguous: boolean, ucernControlFail = false): { providers: Provider[]; facilities: Facility[] } {
+  if (ucernControlFail) {
+    // QuickCare's enrollment lapsed: the provider is not active on the date of service.
+    return { facilities: FACILITIES, providers: PROVIDERS.map((pr) => (pr.id === 'PRV-2006' ? { ...pr, status: 'inactive' } : pr)) };
+  }
   if (!ambiguous) return { providers: PROVIDERS, facilities: FACILITIES };
   return {
     facilities: FACILITIES.map((f) => (f.id === 'FAC-102' ? { ...f, status: 'inactive' } : f)),
@@ -56,8 +72,9 @@ export function directory(ambiguous: boolean): { providers: Provider[]; faciliti
 export function searchProviders(
   q: { name?: string; npi?: string; tin?: string; zip?: string; specialty?: string; placeOfService?: string; networkSource?: string },
   ambiguous: boolean,
+  ucernControlFail = false,
 ) {
-  const { providers, facilities } = directory(ambiguous);
+  const { providers, facilities } = directory(ambiguous, ucernControlFail);
   const fac = new Map(facilities.map((f) => [f.id, f]));
   const has = (v: string | undefined, target: string) => !v?.trim() || target.toLowerCase().includes(v.trim().toLowerCase());
   const matches = providers.filter((pr) => {

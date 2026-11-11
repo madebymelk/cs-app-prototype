@@ -18,7 +18,7 @@ describe('templateFor', () => {
 
   it('every routed and destination template exists in config', () => {
     for (const id of [...Object.values(ESCALATION_ROUTES), ...Object.values(DESTINATION_DEFAULT_TEMPLATE)]) {
-      expect(ESCALATION_TEMPLATES).toHaveProperty(id!);
+      expect(ESCALATION_TEMPLATES).toHaveProperty(id);
     }
   });
 

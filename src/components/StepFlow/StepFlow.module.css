@@ -1,0 +1,83 @@
+.flow {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width-strong) solid var(--color-primary);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.title {
+  margin: var(--space-0);
+  font-size: var(--text-lg-size);
+  line-height: var(--text-lg-line);
+  font-weight: var(--weight-semibold);
+}
+
+.muted {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm-size);
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-0);
+  padding: var(--space-0);
+  list-style: none;
+  font-size: var(--text-sm-size);
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.marker {
+  display: inline-grid;
+  place-items: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  border: var(--border-width-strong) solid var(--color-border-control);
+  border-radius: var(--radius-pill);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs-size);
+  font-weight: var(--weight-semibold);
+}
+
+.done .marker {
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.current {
+  color: var(--color-ink);
+  font-weight: var(--weight-semibold);
+}
+
+.current .marker {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.stepTitle {
+  margin: var(--space-0);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border);
+  font-size: var(--text-md-size);
+  font-weight: var(--weight-semibold);
+}
+
+.stepTitle:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+}
+
+.body {
+  display: grid;
+  gap: var(--space-3);
+}

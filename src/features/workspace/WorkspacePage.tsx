@@ -32,6 +32,9 @@ import { veteranAdapter } from '@/api/veteranAdapter';
 import { ContextChips } from '@/components/ContextChips/ContextChips';
 import { ContextPanel } from '@/features/context/ContextPanel';
 import { DownstreamSection } from '@/features/downstream/DownstreamSection';
+import { JoinNetworkPanel } from '@/features/records/JoinNetworkPanel';
+import { QuickActions, type QuickAction } from '@/features/records/QuickActions';
+import { RecordFlow } from '@/features/records/RecordFlow';
 import { addCase, associateProvider, cancelCase, closeCase, copyPrior, endInteraction, identifyVeteran } from './actions';
 import { scheduleSave } from './autosave';
 import { issueMessage, issueTarget } from './issues';
@@ -95,6 +98,7 @@ export function WorkspacePage() {
   const [endBlocked, setEndBlocked] = useState<string[] | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [escalating, setEscalating] = useState(false);
+  const [panel, setPanel] = useState<QuickAction | null>(null);
   const [viewDuplicate, setViewDuplicate] = useState<Case | null>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   const caseHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -377,6 +381,18 @@ export function WorkspacePage() {
                 items={shownIssues.map((i) => ({ targetId: issueTarget(active.id, i), message: issueMessage(i) }))}
               />
             ) : null}
+
+            {!readOnly ? (
+              <QuickActions
+                onAction={(a) => {
+                  setPanel(a);
+                }}
+              />
+            ) : null}
+            {panel === 'ucern' || panel === 'vpern' ? (
+              <RecordFlow key={`${active.id}-${panel}`} kind={panel} c={active} veteranId={veteranId} onClose={() => { setPanel(null); }} />
+            ) : null}
+            {panel === 'joinNetwork' ? <JoinNetworkPanel onClose={() => { setPanel(null); }} /> : null}
 
             <CaseForm
               key={active.id}
