@@ -117,6 +117,10 @@ export interface Case {
   workgroup?: { id: string; assignedBy: 'rule' | 'manual' };
   /** Case-type-specific fields from src/config/caseTypes.ts (F5). */
   typeFields: Record<string, string>;
+  /** Interaction type, for search (docs/03 F6). */
+  channel?: Channel;
+  /** Facility / VAMC context, for search (docs/03 F6). */
+  vamc?: string;
   /** Last downstream failure; the case stays Open with this error (docs/01). */
   downstreamError?: { message: string; correlationId?: string };
   linked: LinkedRecord[];
@@ -219,4 +223,12 @@ export interface RecordList<T> {
   items: T[];
   source: string;
   updatedAt: string;
+}
+
+/** Search result row and detail: the case plus display names the client shouldn't have to resolve. */
+export interface CaseSummary extends Case {
+  ownerName: string;
+  callerName?: string;
+  /** Display names for audit actors (IDs stay in the audit trail itself). */
+  actorNames?: Record<string, string>;
 }

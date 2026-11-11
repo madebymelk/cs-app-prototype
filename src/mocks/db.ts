@@ -3,6 +3,7 @@ import type { ScenarioId } from '@/dev/scenarios';
 import { auditEvent } from '@/domain/audit';
 import { caseId, generateInteraction, generateVeteran, hashString, isoDaysAgo, mulberry32, pick } from './seed';
 import { FIRST_NAMES, LAST_NAMES } from './names';
+import { buildHistory } from './history';
 
 /**
  * In-browser mock database, persisted to sessionStorage so a reload keeps the simulated call.
@@ -18,11 +19,20 @@ interface Db {
   counter: number;
 }
 
+/** Seeded case history (past five weeks) and its Veterans. */
+const HISTORY = buildHistory(new Date());
+
 /** A fixed, searchable population of synthetic Veterans (same every session). */
 const POPULATION: Veteran[] = (() => {
   const rng = mulberry32(2026);
-  return Array.from({ length: 24 }, () => generateVeteran(rng));
+  return [...Array.from({ length: 24 }, () => generateVeteran(rng)), ...HISTORY.veterans];
 })();
+
+const allCases = (db: Db): Case[] => {
+  const live = Object.values(db.cases);
+  const ids = new Set(live.map((c) => c.id));
+  return [...live, ...HISTORY.cases.filter((c) => !ids.has(c.id))];
+};
 
 function load(): Db {
   try {
@@ -185,8 +195,11 @@ export const mockDb = {
       .filter((c) => c.interactionId === interactionId)
       .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
   },
+  allCases(): Case[] {
+    return allCases(load()).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  },
   casesForCaller(callerRef: string): Case[] {
-    return Object.values(load().cases)
+    return allCases(load())
       .filter((c) => c.callerRef === callerRef)
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   },
@@ -198,7 +211,7 @@ export const mockDb = {
     const now = new Date();
     const id = caseId(mulberry32(hashString(`${interactionId}:${String(db.counter)}:${String(Date.now())}`)));
     const c = blankCase(
-      { ...sharedContext(i), ...fields, id, interactionId, ownerId, audit: [auditEvent(ownerId, 'case.created', { refIds: [id] }, now)] },
+      { ...sharedContext(i), ...fields, id, interactionId, ownerId, channel: i.channel, audit: [auditEvent(ownerId, 'case.created', { refIds: [id] }, now)] },
       now,
     );
     db.cases[id] = c;
@@ -223,7 +236,7 @@ export const mockDb = {
     );
   },
   getCase(id: string): Case | undefined {
-    return load().cases[id];
+    return load().cases[id] ?? HISTORY.cases.find((c) => c.id === id);
   },
   saveCase(c: Case): Case {
     const db = load();

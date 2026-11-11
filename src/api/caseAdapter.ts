@@ -1,10 +1,47 @@
 import type { CloseIssue } from '@/domain/closeValidation';
-import type { Case } from '@/domain/types';
+import type { Case, CaseSummary } from '@/domain/types';
 import { ApiError, apiGet, apiSend } from './client';
 
 export const CASE_SOURCE = 'Case service';
 
+export interface CaseSearchQuery {
+  q?: string;
+  caseId?: string;
+  from?: string;
+  to?: string;
+  owner?: string;
+  status?: string;
+  veteranId?: string;
+  providerId?: string;
+  vamc?: string;
+  caseType?: string;
+  reason?: string;
+  disposition?: string;
+  workgroup?: string;
+  channel?: string;
+  page?: number;
+}
+
+export interface CaseSearchResult {
+  items: CaseSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  tooMany: boolean;
+  /** A source that didn't answer; results are partial. */
+  partial?: string;
+}
+
+const qs = (q: object) =>
+  new URLSearchParams(
+    Object.entries(q)
+      .filter(([, v]) => v !== undefined && String(v).trim() !== '')
+      .map(([k, v]) => [k, String(v)]),
+  ).toString();
+
 export const caseAdapter = {
+  search: (q: CaseSearchQuery, signal?: AbortSignal) => apiGet<CaseSearchResult>(`/cases?${qs(q)}`, CASE_SOURCE, { signal }),
+  get: (id: string, signal?: AbortSignal) => apiGet<CaseSummary>(`/cases/${encodeURIComponent(id)}`, CASE_SOURCE, { signal }),
   listForInteraction: (interactionId: string, signal?: AbortSignal) =>
     apiGet<Case[]>(`/interactions/${encodeURIComponent(interactionId)}/cases`, CASE_SOURCE, { signal }),
   listForCaller: (callerRef: string, signal?: AbortSignal) =>

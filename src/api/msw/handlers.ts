@@ -1,7 +1,8 @@
 import { delay, http, HttpResponse } from 'msw';
 import { useDevStore } from '@/dev/devStore';
 import { validateClose } from '@/domain/closeValidation';
-import type { Case, HealthStatus } from '@/domain/types';
+import type { Case, CaseSummary, HealthStatus } from '@/domain/types';
+import { agentName } from '@/mocks/agents';
 import { mockDb } from '@/mocks/db';
 import { directory, searchProviders } from '@/mocks/providers';
 import { generateEligibility, generateRecords, RECORD_KINDS, type RecordKind } from '@/mocks/records';
@@ -28,6 +29,53 @@ const scenario = () => useDevStore.getState().scenario;
 const syncedAt = () => new Date(Date.now() - (scenario() === 'syncDelayed' ? 47 * 60_000 : 0)).toISOString();
 
 const createdRecords = new Map<string, object>();
+
+function summarize(c: Case, profileDown: boolean): CaseSummary {
+  const v = profileDown || !c.callerRef ? undefined : mockDb.getVeteran(c.callerRef);
+  const actorNames = Object.fromEntries(c.audit.map((a) => [a.actorId, agentName(a.actorId)]));
+  return { ...c, ownerName: agentName(c.ownerId), actorNames, ...(v ? { callerName: `${v.firstName} ${v.lastName}` } : {}) };
+}
+
+const TERMINAL = ['closed', 'discarded', 'canceled'];
+const PAGE_SIZE = 10;
+const TOO_MANY = 30;
+
+/** Mock case search (docs/03 F6). Newest first, paginated; partial results name the down source. */
+function searchCases(q: Record<string, string>, profileDown: boolean) {
+  const has = (k: string) => Boolean(q[k]?.trim());
+  const text = q.q?.trim().toLowerCase();
+  const from = has('from') ? Date.parse(`${q.from ?? ''}T00:00:00`) : undefined;
+  const to = has('to') ? Date.parse(`${q.to ?? ''}T23:59:59`) : undefined;
+  const matches = mockDb.allCases().filter((c) => {
+    const created = Date.parse(c.createdAt);
+    const v = c.callerRef ? mockDb.getVeteran(c.callerRef) : undefined;
+    return (
+      (!text || [c.id, c.callerRef, c.callerFirstName, v?.lastName, v ? `${v.firstName} ${v.lastName}` : undefined].some((x) => x?.toLowerCase().includes(text))) &&
+      (!has('caseId') || c.id.toLowerCase().includes((q.caseId ?? '').trim().toLowerCase())) &&
+      (from === undefined || created >= from) &&
+      (to === undefined || created <= to) &&
+      (!has('owner') || c.ownerId === q.owner) &&
+      (!has('status') || (q.status === 'notClosed' ? !TERMINAL.includes(c.status) : c.status === q.status)) &&
+      (!has('veteranId') || c.callerRef === q.veteranId?.trim()) &&
+      (!has('providerId') || c.linked.some((l) => l.kind === 'provider' && l.refId === q.providerId?.trim())) &&
+      (!has('vamc') || c.vamc === q.vamc) &&
+      (!has('caseType') || c.caseType === q.caseType) &&
+      (!has('reason') || c.finalReason === q.reason) &&
+      (!has('disposition') || c.disposition === q.disposition) &&
+      (!has('workgroup') || c.workgroup?.id === q.workgroup) &&
+      (!has('channel') || c.channel === q.channel)
+    );
+  });
+  const page = Math.max(1, Number(q.page ?? '1') || 1);
+  return {
+    items: matches.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((c) => summarize(c, profileDown)),
+    total: matches.length,
+    page,
+    pageSize: PAGE_SIZE,
+    tooMany: matches.length > TOO_MANY,
+    ...(profileDown ? { partial: 'Veteran profile service' } : {}),
+  };
+}
 const failedOnce = new Set<string>();
 
 const ESCALATION_FLOW: Record<string, string> = { new: 'assigned', assigned: 'pending', pending: 'resolved', blocked: 'assigned' };
@@ -73,8 +121,16 @@ export const handlers = [
 
   http.get(p('/cases'), async ({ request }) => {
     await simulateLatency();
-    const callerRef = new URL(request.url).searchParams.get('callerRef');
-    return json(callerRef ? mockDb.casesForCaller(callerRef) : []);
+    const params = new URL(request.url).searchParams;
+    const callerRef = params.get('callerRef');
+    if (callerRef) return json(mockDb.casesForCaller(callerRef));
+    return json(searchCases(Object.fromEntries(params), scenario() === 'profileServiceDown'));
+  }),
+
+  http.get(p('/cases/:id'), async ({ params }) => {
+    await simulateLatency();
+    const c = mockDb.getCase(String(params.id));
+    return c ? json(summarize(c, false)) : json({ error: 'Case not found' }, 404);
   }),
 
   http.patch(p('/cases/:id'), async ({ params, request }) => {

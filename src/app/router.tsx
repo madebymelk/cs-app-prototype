@@ -7,11 +7,11 @@ import { RequirePermission } from './routes/RequirePermission';
 import { CASE_SEARCH_ACCESS } from '@/config/navigation';
 import {
   AdminPage,
-  CaseDetailPage,
-  CaseSearchPage,
   DocumentPage,
 } from './routes/stubPages';
 import { ProviderProfilePage, VeteranProfilePage } from '@/features/context/ProfilePages';
+import { CaseDetailPage } from '@/features/cases/CaseDetailPage';
+import { CaseSearchPage } from '@/features/cases/CaseSearchPage';
 
 /** Routes (docs/03). Screen pop goes straight to /interaction/:id. */
 export const routes: RouteObject[] = [
